@@ -42,18 +42,19 @@ function Cursor(x, y) {
   this.centerX = x || 0;
   this.centerY = y || 0;
   this.fill = '#FFAAAA';
-}
-// Draws the cursor to a given context
-Cursor.prototype.draw = function(ctx) {
-  //ctx.fillRect(this.x, this.y, this.w, this.h);
-  ctx.beginPath();
-  ctx.arc(this.centerX, this.centerY, this.radius, 0, 2 * Math.PI, false);
-  ctx.fillStyle = 'green';
-  ctx.fillStyle = this.fill;
-  ctx.fill();
-  ctx.lineWidth = 0.5;
-  ctx.strokeStyle = '#003300';
-  ctx.stroke();
+  //  Shape.call(this, x, y, 3, 3, fill);// https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/Inheritance
+  // ***** Functions *****
+  this.draw = function(ctx) {// Draws the cursor to a given context
+    //ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.beginPath();
+    ctx.arc(this.centerX, this.centerY, this.radius, 0, 2 * Math.PI, false);
+    ctx.fillStyle = 'green';
+    ctx.fillStyle = this.fill;
+    ctx.fill();
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = '#003300';
+    ctx.stroke();
+  }
 }
 
 // Constructor for Shape objects to hold data for all drawn objects.
@@ -69,49 +70,48 @@ function Shape(x, y, w, h, fill) {
   this.maxx = this.x+this.w;
   this.maxy = this.y+this.h;
   this.fill = fill || '#AAAAAA';
-}
-
-// Draws this shape to a given context
-Shape.prototype.moveto = function(xloc, yloc) {
-  this.x = xloc;
-  this.y = yloc;
-  this.maxx = this.x+this.w;
-  this.maxy = this.y+this.h;
-}
-
-// Draws this shape to a given context
-Shape.prototype.draw = function(ctx) {
-  ctx.fillStyle = this.fill;
-  ctx.fillRect(this.x, this.y, this.w, this.h);
-}
-
-// Determine if a point is inside the shape's bounds
-Shape.prototype.contains = function(mx, my) {
-  // All we have to do is make sure the Mouse X,Y fall in the area between
-  // the shape's X and (X + Width) and its Y and (Y + Height)
-  return  (this.x <= mx) && (this.x + this.w >= mx) && (this.y <= my) && (this.y + this.h >= my);
-}
-
-// Determine if two shapes collide
-Shape.prototype.overlaps = function(other) {
-  // All we have to do is make sure the Mouse X,Y fall in the area between
-  // the shape's X and (X + Width) and its Y and (Y + Height)
-  if (this.maxx<other.x){ return false; }
-  if (other.maxx<this.x){ return false; }
-  if (this.maxy<other.y){ return false; }
-  if (other.maxy<this.y){ return false; }
-  return true;
-  
-  if (other.x <= this.maxx){
-    if (this.x <= other.maxx){
-      if (other.y <= this.maxy){
-        if (this.y <= other.maxy){
-          return true;
+  // ***** Functions *****
+  this.CloneMe = function() {
+    var child = new Shape(this.x, this.y, this.w, this.h, 'rgba(0,255,0,.6)');
+    child.maxx = this.maxx; child.maxy = this.maxy;
+    child.fill = this.fill;//'rgba(0, 255, 0, .6)';
+    return child;
+  }
+  this.moveto = function(xloc, yloc) {
+    this.x = xloc;
+    this.y = yloc;
+    this.maxx = this.x+this.w;
+    this.maxy = this.y+this.h;
+  }
+  this.draw = function(ctx) {// Draws this shape to a given context
+    ctx.fillStyle = this.fill;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+  }
+  this.contains = function(mx, my) {// Determine if a point is inside the shape's bounds
+    // All we have to do is make sure the Mouse X,Y fall in the area between
+    // the shape's X and (X + Width) and its Y and (Y + Height)
+    return  (this.x <= mx) && (this.x + this.w >= mx) && (this.y <= my) && (this.y + this.h >= my);
+  }
+  this.overlaps = function(other) {// Determine if two shapes collide
+    // All we have to do is make sure the Mouse X,Y fall in the area between
+    // the shape's X and (X + Width) and its Y and (Y + Height)
+    if (this.maxx<other.x){ return false; }
+    if (other.maxx<this.x){ return false; }
+    if (this.maxy<other.y){ return false; }
+    if (other.maxy<this.y){ return false; }
+    return true;
+    
+    if (other.x <= this.maxx){
+      if (this.x <= other.maxx){
+        if (other.y <= this.maxy){
+          if (this.y <= other.maxy){
+            return true;
+          }
         }
       }
     }
+    return false;
   }
-  return false;
 }
 
 function CanvasState(canvas) {
@@ -211,19 +211,12 @@ function CanvasState(canvas) {
   canvas.addEventListener('mouseup', function(e) {
     setTimeout(function(e) { myState.dragging = false; }, delayMillis, e);
   }, true);
-  // double click for making new shapes
-  canvas.addEventListener('dblclick', function(e) { 
+  canvas.addEventListener('dblclick', function(e) {// double click for making new shapes
     setTimeout(function(e) {
       var mouse = myState.getMouse(e);
       myState.addShape(new Shape(mouse.x - 10, mouse.y - 10, 20, 20, 'rgba(0,255,0,.6)'));
     }, delayMillis, e);
   }, true);
-  
-  setTimeout(function() {
-    //your code to be executed after 1 second
-    //alert("I am setTimeout"+myState.dragging);
-  }, delayMillis);
-
   
   // **** Options! ****
   
@@ -231,25 +224,24 @@ function CanvasState(canvas) {
   this.selectionWidth = 2;  
   this.interval = 30;
   setInterval(function() { myState.draw(); }, myState.interval);
-}
-
-CanvasState.prototype.GetCollider = function(shape) {// collision detection, not used yet
-  var OtherShape = null;
-  var len = shapes.length;
-  for (var cnt = 0; cnt < len; cnt++) {
-    OtherShape = shapes[cnt];
-    if (OtherShape.overlaps(shape)) { return OtherShape; }
+  
+  // ***** Functions *****
+  this.GetCollider = function(shape) {// collision detection, not used yet
+    var OtherShape = null;
+    var len = shapes.length;
+    for (var cnt = 0; cnt < len; cnt++) {
+      OtherShape = shapes[cnt];
+      if (OtherShape.overlaps(shape)) { return OtherShape; }
+    }
+    return null;
   }
-  return null;
-}
-
-CanvasState.prototype.addShape = function(shape) {
-  this.shapes.push(shape);
-  this.valid = false;
-}
-
-CanvasState.prototype.clear = function() {
-  this.ctx.clearRect(0, 0, this.width, this.height);
+  this.addShape = function(shape) {
+    this.shapes.push(shape);
+    this.valid = false;
+  }
+  this.clear = function() {
+    this.ctx.clearRect(0, 0, this.width, this.height);
+  }
 }
 
 // While draw is called as often as the INTERVAL variable demands,
@@ -264,11 +256,11 @@ CanvasState.prototype.draw = function() {
     // ** Add stuff you want drawn in the background all the time here **
     
     // draw all shapes`
-    var l = shapes.length;
-    for (var i = 0; i < l; i++) {
+    var len = shapes.length;
+    for (var i = 0; i < len; i++) {
       var shape = shapes[i];
       // We can skip the drawing of elements that have moved off the screen:
-      if (shape.x > this.width || shape.y > this.height || shape.x + shape.w < 0 || shape.y + shape.h < 0) continue;
+      if (shape.x > this.width || shape.y > this.height || shape.maxx < 0 || shape.maxy < 0) continue;
       shapes[i].draw(ctx);
     }
     
@@ -294,7 +286,6 @@ CanvasState.prototype.draw = function() {
     this.valid = true;
   }
 }
-
 
 // Creates an object with x and y defined, set to the mouse position relative to the state's canvas
 // If you wanna be super-correct this can be tricky, we have to worry about padding and borders
@@ -326,6 +317,8 @@ CanvasState.prototype.getMouse = function(e) {
 //init();
 
 function init() {
+  //var p = new Polygon(11, 17);
+  //p.blah();
   var s = new CanvasState(document.getElementById('MainCanvas'));
   if (false){
     s.addShape(new Shape(40,40,50,50)); // The default is gray
@@ -354,7 +347,18 @@ function init() {
   s.Terrain = new Shape(0, canvas.height-50, canvas.width, 50, 'rgba(179, 179, 179, .7)');
   s.GhostMouse = new Cursor(50,50);
 }
-
+/*
+"use strict";// this would be a much better way, but alas IE does not support it.
+class Polygon {
+  constructor(height, width) {
+    this.height = height;
+    this.width = width;
+  }
+  blah(){
+    console.log("blah");
+  }
+}
+*/
 // Now go make something amazing!
 
 /*
